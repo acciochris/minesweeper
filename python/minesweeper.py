@@ -1,7 +1,12 @@
+#!/usr/bin/env python3
+"""The python implementation of the minesweeper game"""
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 import random
-import itertools
+import curses
+import argparse
+import sys
 
 
 class MineError(Exception):
@@ -49,6 +54,7 @@ class Board:
 
     def _flag_count(self, pos: tuple[int, int]):
         """Count the flags around a cell"""
+        x, y = pos
         count = 0
         for neighbor in self._neighbors((x, y)).values():
             if neighbor.flagged:
@@ -120,4 +126,42 @@ class Board:
 class Minesweeper:
     """UI for the Minesweeper game"""
 
-    pass
+    def main(self, columns: int, rows: int, mines: int):
+        pass
+
+
+def main(args=None):
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "-c",
+        "--columns",
+        default=9,
+        type=int,
+        help="The number of columns on the board",
+    )
+    parser.add_argument(
+        "-r",
+        "--rows",
+        default=9,
+        type=int,
+        help="The number of rows on the board",
+    )
+    parser.add_argument(
+        "-m",
+        "--mines",
+        default=10,
+        type=int,
+        help="The number of mines on the board",
+    )
+    if not args:
+        args = sys.argv[1:]
+
+    opt = parser.parse_args(args)
+    minesweeper = Minesweeper()
+    curses.wrapper(minesweeper.main, opt.columns, opt.rows, opt.mines)
+
+
+if __name__ == "__main__":
+    main()
