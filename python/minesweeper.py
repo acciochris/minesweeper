@@ -145,9 +145,8 @@ class Minesweeper:
 
         # Main loop
         while True:
-            c = stdscr.getch()
-            if 0 < c < 256:
-                c = chr(c)
+            c = chr(stdscr.getch())
+            if 0 < ord(c) < 256:
                 if c in "Qq":
                     break
 
