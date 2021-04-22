@@ -34,10 +34,11 @@ class Board:
 
     def __post_init__(self):
         """Initialize empty board"""
-        for _ in self.cols:
-            self.cells.append([Cell() for _ in self.rows])
+        self.cells = []
+        for _ in range(self.cols):
+            self.cells.append([Cell() for _ in range(self.rows)])
 
-    def _neighbors(self, pos: tuple[int, int]):
+    def _neighbors(self, pos: tuple[int, int]) -> dict[tuple[int, int], Cell]:
         """Return the neighbors of a cell"""
         x, y = pos
         neighbors = (
@@ -52,7 +53,7 @@ class Board:
         )
         return {(a, b): self.cells[a][b] for a, b in neighbors}
 
-    def _flag_count(self, pos: tuple[int, int]):
+    def _flag_count(self, pos: tuple[int, int]) -> int:
         """Count the flags around a cell"""
         x, y = pos
         count = 0
@@ -73,7 +74,7 @@ class Board:
     def initmines(self, start: tuple[int, int]):
         """Initialize mines with no mine at `start`"""
         # Initialize mines
-        poses = [(x, y) for x in self.cols for y in self.rows]
+        poses = [(x, y) for x in range(self.cols) for y in range(self.rows)]
         mines = random.sample([pos for pos in poses if pos != start], self.mines)
 
         for x, y in mines:
@@ -86,7 +87,7 @@ class Board:
                 if neighbor.mine:
                     cell.mine_count += 1
 
-    def uncover(self, pos: tuple[int, int]):
+    def uncover(self, pos: tuple[int, int]) -> list[tuple[int, int]]:
         """Uncover a cell"""
         x, y = pos
         cell = self.cells[x][y]
@@ -126,8 +127,36 @@ class Board:
 class Minesweeper:
     """UI for the Minesweeper game"""
 
-    def main(self, columns: int, rows: int, mines: int):
-        pass
+    def __init__(self, cols=9, rows=9, mines=10):
+        self.board = Board(cols, rows, mines)
+
+    def main(self, stdscr: curses._CursesWindow):
+        """The main entry point for the game"""
+        # Initialize everything
+        stdscr.clear()
+        stdscr.refresh()
+
+        curses.curs_set(0)
+        stdscr_y, stdscr_x = stdscr.getmaxyx()
+        if (self.board.rows > stdscr_y) or (self.board.cols > stdscr_x):
+            raise RuntimeError("Screen is too small!")
+        board_win = curses.newwin(self.board.rows + 1, self.board.cols + 1)
+        self.init_board(board_win)
+
+        # Main loop
+        while True:
+            c = stdscr.getch()
+            if 0 < c < 256:
+                c = chr(c)
+                if c in "Qq":
+                    break
+
+    def init_board(self, win: curses._CursesWindow):
+        """Initialize the board in `win`"""
+        for y in range(self.board.rows):
+            for x in range(self.board.cols):
+                win.addstr(y, x, "-")
+        win.refresh()
 
 
 def main(args=None):
@@ -136,7 +165,7 @@ def main(args=None):
     )
     parser.add_argument(
         "-c",
-        "--columns",
+        "--cols",
         default=9,
         type=int,
         help="The number of columns on the board",
@@ -158,9 +187,9 @@ def main(args=None):
     if not args:
         args = sys.argv[1:]
 
-    opt = parser.parse_args(args)
-    minesweeper = Minesweeper()
-    curses.wrapper(minesweeper.main, opt.columns, opt.rows, opt.mines)
+    config = parser.parse_args(args)
+    minesweeper = Minesweeper(config.cols, config.rows, config.mines)
+    curses.wrapper(minesweeper.main)
 
 
 if __name__ == "__main__":
